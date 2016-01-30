@@ -13,6 +13,7 @@ export DEBIAN_FRONTEND=noninteractive
 pkgs=(
     git
     htop
+    moreutils
     mosh
     ncdu
     ntp
