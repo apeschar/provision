@@ -1,0 +1,20 @@
+#!/bin/bash
+
+set -eu
+set -o pipefail
+
+say() { echo "$@" >&2; }
+say_do() { say "$@"; "$@"; }
+
+cd /
+
+export DEBIAN_FRONTEND=noninteractive
+
+say_do apt-get install -y mariadb-{server,client}
+
+cat > /etc/mysql/conf.d/query_cache.cnf <<EOF
+query_cache_type = ON
+query_cache_size = 64M
+EOF
+
+say_do systemctl restart mysql
