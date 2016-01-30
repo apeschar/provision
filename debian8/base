@@ -8,6 +8,8 @@ say_do() { say "$@"; "$@"; }
 
 cd /
 
+export DEBIAN_FRONTEND=noninteractive
+
 say_do apt-get update
 say_do apt-get dist-upgrade -y
 
