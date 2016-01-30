@@ -16,6 +16,7 @@ pkgs=(
     mosh
     ncdu
     rsync
+    sysstat
     ufw
     vim-nox
 )
@@ -28,6 +29,9 @@ say_do apt-get install -y ${pkgs[@]}
 say_do ufw allow 22/tcp
 say_do ufw allow 60000:60999/udp
 say_do ufw --force enable
+
+say_do perl -pi -e 's/^ENABLED="false"/ENABLED="true"/' /etc/default/sysstat
+say_do systemctl restart sysstat
 
 say_do apt-get autoremove -y
 
