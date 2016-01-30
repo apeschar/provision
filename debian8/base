@@ -19,4 +19,6 @@ say_do ufw allow 22/tcp
 say_do ufw allow 60000:60999/udp
 say_do ufw --force enable
 
+say_do apt-get autoremove -y
+
 echo -n > /etc/motd
