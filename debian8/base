@@ -1,0 +1,18 @@
+#!/bin/bash
+
+set -eu
+set -o pipefail
+
+say() { echo "$@" >&2; }
+say_do() { say "$@"; "$@"; }
+
+cd /
+
+say_do apt-get update
+say_do apt-get dist-upgrade -y
+
+say_do apt-get install -y ufw mosh vim-nox rsync
+
+say_do ufw allow 22/tcp
+say_do ufw allow 60000:60999/udp
+say_do ufw --force enable
