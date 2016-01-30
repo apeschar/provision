@@ -16,6 +16,7 @@ pkgs=(
     mosh
     ncdu
     ntp
+    pv
     rsync
     sysstat
     ufw
