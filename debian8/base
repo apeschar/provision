@@ -10,10 +10,20 @@ cd /
 
 export DEBIAN_FRONTEND=noninteractive
 
+pkgs=(
+    git
+    htop
+    mosh
+    ncdu
+    rsync
+    ufw
+    vim-nox
+)
+
 say_do apt-get update
 say_do apt-get dist-upgrade -y
 
-say_do apt-get install -y ufw mosh vim-nox rsync
+say_do apt-get install -y ${pkgs[@]}
 
 say_do ufw allow 22/tcp
 say_do ufw allow 60000:60999/udp
