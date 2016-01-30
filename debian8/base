@@ -16,3 +16,5 @@ say_do apt-get install -y ufw mosh vim-nox rsync
 say_do ufw allow 22/tcp
 say_do ufw allow 60000:60999/udp
 say_do ufw --force enable
+
+echo -n > /etc/motd
