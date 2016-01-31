@@ -38,6 +38,7 @@ say_do systemctl restart sysstat
 
 say_do apt-get autoremove -y
 
-ln -sfn ../usr/share/zoneinfo/Europe/Amsterdam /etc/localtime
+echo Europe/Amsterdam > /etc/timezone
+dpkg-reconfigure tzdata
 
 echo -n > /etc/motd
