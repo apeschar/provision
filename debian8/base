@@ -41,4 +41,6 @@ say_do apt-get autoremove -y
 echo Europe/Amsterdam > /etc/timezone
 dpkg-reconfigure tzdata
 
+update-alternatives --set editor /usr/bin/vim.nox
+
 echo -n > /etc/motd
