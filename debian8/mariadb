@@ -10,7 +10,7 @@ cd /
 
 export DEBIAN_FRONTEND=noninteractive
 
-say_do apt-get install -y mariadb-{server,client}
+say_do apt-get -qq install -y mariadb-{server,client}
 
 cat > /etc/mysql/conf.d/query_cache.cnf <<EOF
 query_cache_type = ON

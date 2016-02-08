@@ -10,7 +10,7 @@ cd /
 
 export DEBIAN_FRONTEND=noninteractive
 
-say_do apt-get install -y nginx-full nginx-doc
+say_do apt-get -qq install -y nginx-full nginx-doc
 
 say_do ufw allow 80/tcp
 say_do ufw allow 443/tcp

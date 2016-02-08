@@ -24,10 +24,10 @@ pkgs=(
     vim-nox
 )
 
-say_do apt-get update
-say_do apt-get dist-upgrade -y
+say_do apt-get -qq update
+say_do apt-get -qq dist-upgrade -y
 
-say_do apt-get install -y ${pkgs[@]}
+say_do apt-get -qq install -y ${pkgs[@]}
 
 say_do ufw allow 22/tcp
 say_do ufw allow 60000:60999/udp
@@ -36,7 +36,7 @@ say_do ufw --force enable
 say_do perl -pi -e 's/^ENABLED="false"/ENABLED="true"/' /etc/default/sysstat
 say_do systemctl restart sysstat
 
-say_do apt-get autoremove -y
+say_do apt-get -qq autoremove -y
 
 echo Europe/Amsterdam > /etc/timezone
 dpkg-reconfigure tzdata
