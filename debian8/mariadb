@@ -13,6 +13,7 @@ export DEBIAN_FRONTEND=noninteractive
 say_do apt-get -qq install -y mariadb-{server,client}
 
 cat > /etc/mysql/conf.d/query_cache.cnf <<EOF
+[mysqld]
 query_cache_type = ON
 query_cache_size = 64M
 EOF
