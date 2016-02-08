@@ -11,6 +11,7 @@ cd /
 export DEBIAN_FRONTEND=noninteractive
 
 pkgs=(
+    curl
     git
     htop
     moreutils
@@ -19,6 +20,7 @@ pkgs=(
     ntp
     pv
     rsync
+    sudo
     sysstat
     ufw
     vim-nox
