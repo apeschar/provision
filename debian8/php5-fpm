@@ -1,0 +1,44 @@
+#!/bin/bash
+
+set -eu
+set -o pipefail
+
+say() { echo "$@" >&2; }
+say_do() { say "$@"; "$@"; }
+
+cd /
+
+export DEBIAN_FRONTEND=noninteractive
+
+say_do apt-get -qq install -y php5-fpm php5-mysqlnd php5-gd php5-cli
+
+# Create user_pool.conf for easy per-user pool configuration.
+say_do mkdir -p /etc/php5/fpm/include
+cat > /etc/php5/fpm/include/user_pool.conf <<EOF
+user = \$pool
+group = \$pool
+listen = /var/run/php5-fpm/\$pool.sock
+listen.owner = www-data
+listen.group = www-data
+pm = ondemand
+pm.max_children = 5
+pm.process_idle_timeout = 10s
+pm.max_requests = 500
+chdir = /
+EOF
+
+cat > /etc/php5/fpm/pool.d/user.conf.example <<EOF
+[user]
+include = /etc/php5/fpm/include/user_pool.conf
+EOF
+
+# Configure systemd to create a run-time directory.
+say_do mkdir -p /etc/systemd/system/php5-fpm.service.d
+cat > /etc/systemd/system/php5-fpm.service.d/RuntimeDirectory.conf <<EOF
+[Service]
+RuntimeDirectory = php5-fpm
+EOF
+
+# Restart php5-fpm.
+say_do systemctl daemon-reload
+say_do systemctl restart php5-fpm
