@@ -1,0 +1,33 @@
+#!/bin/bash
+
+set -eu
+set -o pipefail
+
+say() { echo "$@" >&2; }
+say_do() { say "$@"; "$@"; }
+
+cd /
+
+useradd -m letsencrypt
+chsh -s /bin/bash letsencrypt
+
+git clone --depth 1 https://github.com/lukas2511/letsencrypt.sh.git /opt/letsencryptsh
+
+sudo -u letsencrypt bash <<EOF
+    cd ~
+
+    [[ ! -f domains.txt ]] && echo '# example.com www.example.com' >> domains.txt
+
+    [[ ! -f config.sh ]] && cat > config.sh <<EOT
+#!/usr/bin/env bash
+
+WELLKNOWN="\${BASEDIR}/acme-challenges"
+CONTACT_EMAIL=albert@peschar.net
+EOT
+
+    mkdir -p acme-challenges
+
+    crontab - <<EOT
+12 23 1 * * cd \$HOME && /opt/letsencryptsh/letsencrypt.sh -c -f config.sh
+EOT
+EOF
