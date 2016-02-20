@@ -28,6 +28,6 @@ EOT
     mkdir -p acme-challenges
 
     crontab - <<EOT
-12 23 1 * * cd \$HOME && /opt/letsencryptsh/letsencrypt.sh -c -f config.sh
+0 0 1 * * cd \$HOME && /opt/letsencryptsh/letsencrypt.sh -c -f config.sh
 EOT
 EOF
