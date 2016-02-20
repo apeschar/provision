@@ -26,23 +26,37 @@ pkgs=(
     vim-nox
 )
 
+# Update and install useful packages.
 say_do apt-get -qq update
 say_do apt-get -qq dist-upgrade -y
-
 say_do apt-get -qq install -y ${pkgs[@]}
+say_do apt-get -qq autoremove -y
 
+# Configure firewall.
 say_do ufw allow 22/tcp
 say_do ufw allow 60000:60999/udp
 say_do ufw --force enable
 
+# Enable sysstat data collection.
 say_do perl -pi -e 's/^ENABLED="false"/ENABLED="true"/' /etc/default/sysstat
 say_do systemctl restart sysstat
 
-say_do apt-get -qq autoremove -y
-
+# Set timezone.
 echo Europe/Amsterdam > /etc/timezone
 dpkg-reconfigure tzdata
 
+# Use vim.
 update-alternatives --set editor /usr/bin/vim.nox
 
+# Empty message of the day.
 echo -n > /etc/motd
+
+# Configure ssh to let root log in everywhere.
+if [[ ! -f /usr/sbin/cat_root_authorized_keys ]]; then
+    touch /usr/sbin/cat_root_authorized_keys
+    chmod 700 /usr/sbin/cat_root_authorized_keys
+    echo $'#!/bin/bash\ncat /root/.ssh/authorized_keys' > /usr/sbin/cat_root_authorized_keys
+fi
+
+grep -Pq '^AuthorizedKeysCommand\s+' /etc/ssh/sshd_config ||
+    echo $'\n# Let root login everywhere.\nAuthorizedKeysCommand /usr/sbin/cat_root_authorized_keys' >> /etc/ssh/sshd_config
