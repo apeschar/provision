@@ -64,3 +64,14 @@ grep -Pq '^AuthorizedKeysCommand\s+' /etc/ssh/sshd_config || cat >> /etc/ssh/ssh
 AuthorizedKeysCommand /usr/sbin/cat_root_authorized_keys
 AuthorizedKeysCommandUser root
 EOF
+
+# Configure sudo.
+cat > /etc/sudoers.d/01_provision <<EOF
+# Users in group sudo can run any command without a password.
+%sudo ALL=(ALL) NOPASSWD:ALL
+
+# Input and output is logged for all commands and users.
+Defaults log_input, log_output
+Defaults!/usr/bin/sudoreplay !log_input, !log_output
+Defaults!/usr/sbin/reboot !log_output
+EOF
