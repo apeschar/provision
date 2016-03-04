@@ -31,3 +31,28 @@ EOT
 0 0 1 * * cd \$HOME && /opt/letsencryptsh/letsencrypt.sh -c -f config.sh
 EOT
 EOF
+
+ln -sfn /home/letsencrypt/certs /etc/ssl/letsencrypt
+
+# Configure nginx (if installed).
+if [[ -d /etc/nginx/snippets ]]; then
+    cat > /etc/nginx/snippets/letsencrypt.conf <<EOF
+location ~ ^/\\.well-known/acme-challenge/(.+)$ {
+    alias /home/letsencrypt/acme-challenges/\$1;
+}
+EOF
+fi
+
+if [[ -f /etc/nginx/snippets/common.conf ]]; then
+    cat >> /etc/nginx/snippets/common.conf <<EOF
+
+include snippets/letsencrypt.conf;
+EOF
+fi
+
+# Create letsencrypt_all script.
+cat > /usr/local/bin/letsencrypt_all <<EOF
+#!/bin/bash
+exec sudo -u letsencrypt bash -c 'cd ~ && /opt/letsencryptsh/letsencrypt.sh -c -f config.sh'
+EOF
+chmod 700 /usr/local/bin/letsencrypt_all
