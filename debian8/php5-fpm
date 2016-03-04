@@ -10,7 +10,15 @@ cd /
 
 export DEBIAN_FRONTEND=noninteractive
 
-say_do apt-get -qq install -y php5-fpm php5-mysqlnd php5-gd php5-cli
+pkgs=(
+    php5-cli
+    php5-curl
+    php5-fpm
+    php5-gd
+    php5-mysqlnd
+)
+
+say_do apt-get -qq install -y "${pkgs[@]}"
 
 # Create user_pool.conf for easy per-user pool configuration.
 say_do mkdir -p /etc/php5/fpm/include
