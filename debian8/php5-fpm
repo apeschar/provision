@@ -47,6 +47,12 @@ cat > /etc/systemd/system/php5-fpm.service.d/RuntimeDirectory.conf <<EOF
 RuntimeDirectory = php5-fpm
 EOF
 
+# Configure PHP
+cat > /etc/php5/fpm/conf.d/30-provision.ini <<EOF
+upload_max_filesize = 64M
+post_max_size = 65M
+EOF
+
 # Restart php5-fpm.
 say_do systemctl daemon-reload
 say_do systemctl restart php5-fpm
