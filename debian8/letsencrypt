@@ -18,7 +18,7 @@ sudo -u letsencrypt bash <<EOF
 
     [[ ! -f domains.txt ]] && echo '# example.com www.example.com' >> domains.txt
 
-    [[ ! -f config.sh ]] && cat > config.sh <<EOT
+    [[ ! -f config.sh ]] && cat > config.sh <<'EOT'
 #!/usr/bin/env bash
 
 WELLKNOWN="\${BASEDIR}/acme-challenges"
@@ -27,7 +27,7 @@ EOT
 
     mkdir -p acme-challenges
 
-    crontab - <<EOT
+    crontab - <<'EOT'
 0 0 1 * * cd \$HOME && /opt/letsencryptsh/letsencrypt.sh -c -f config.sh
 EOT
 EOF
