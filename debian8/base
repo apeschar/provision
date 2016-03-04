@@ -65,6 +65,8 @@ AuthorizedKeysCommand /usr/sbin/cat_root_authorized_keys
 AuthorizedKeysCommandUser root
 EOF
 
+systemctl reload sshd
+
 # Configure sudo.
 cat > /etc/sudoers.d/01_provision <<EOF
 # Users in group sudo can run any command without a password.
