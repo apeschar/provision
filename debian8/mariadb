@@ -10,12 +10,42 @@ cd /
 
 export DEBIAN_FRONTEND=noninteractive
 
-say_do apt-get -qq install -y mariadb-{server,client}
+# Install MariaDB
+say_do apt-get -qq install -y mariadb-{server,client} pwgen
 
+# Configure query cache
 cat > /etc/mysql/conf.d/query_cache.cnf <<EOF
 [mysqld]
 query_cache_type = ON
 query_cache_size = 64M
 EOF
-
 say_do systemctl restart mysql
+
+# Secure installation
+set -eu
+
+mysql -e '' mysql
+
+mysql_pw="$(pwgen -s 12 1)"
+touch ~/mysql_pw
+chmod 600 ~/mysql_pw
+echo "root	$mysql_pw" >> ~/mysql_pw
+
+mysql mysql <<EOF
+    UPDATE user SET Password=PASSWORD('$mysql_pw') WHERE User='root';
+    FLUSH PRIVILEGES;
+EOF
+
+touch ~/.my.cnf
+chmod 600 ~/.my.cnf
+echo "[client]
+user=root
+password=$mysql_pw" >> ~/.my.cnf
+
+mysql mysql <<EOF
+    DELETE FROM user WHERE User='';
+    DELETE FROM user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
+    DELETE FROM db WHERE Db='test' OR Db='test\\\\_%';
+    FLUSH PRIVILEGES;
+    DROP DATABASE IF EXISTS test;
+EOF
