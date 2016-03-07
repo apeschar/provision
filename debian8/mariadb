@@ -13,11 +13,13 @@ export DEBIAN_FRONTEND=noninteractive
 # Install MariaDB
 say_do apt-get -qq install -y mariadb-{server,client} pwgen
 
-# Configure query cache
-cat > /etc/mysql/conf.d/query_cache.cnf <<EOF
+# Configuration
+cat > /etc/mysql/conf.d/provision.cnf <<EOF
 [mysqld]
 query_cache_type = ON
 query_cache_size = 64M
+innodb_file_format = Barracuda
+innodb_compression_algorithm = zlib
 EOF
 say_do systemctl restart mysql
 
