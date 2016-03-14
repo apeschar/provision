@@ -23,8 +23,6 @@ EOF
 say_do systemctl restart mysql
 
 # Secure installation
-set -eu
-
 mysql -e '' mysql
 
 mysql_pw="$(pwgen -s 12 1)"
