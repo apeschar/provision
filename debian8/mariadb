@@ -19,7 +19,6 @@ cat > /etc/mysql/conf.d/provision.cnf <<EOF
 query_cache_type = ON
 query_cache_size = 64M
 innodb_file_format = Barracuda
-innodb_compression_algorithm = zlib
 EOF
 say_do systemctl restart mysql
 
