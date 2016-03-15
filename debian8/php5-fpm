@@ -49,6 +49,7 @@ EOF
 
 # Configure PHP
 cat > /etc/php5/fpm/conf.d/30-provision.ini <<EOF
+short_open_tag = On
 upload_max_filesize = 64M
 post_max_size = 65M
 EOF
