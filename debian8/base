@@ -14,6 +14,7 @@ pkgs=(
     curl
     git
     htop
+    iptables-persistent
     moreutils
     mosh
     ncdu
@@ -30,6 +31,21 @@ say_do apt-get -qq update
 say_do apt-get -qq dist-upgrade -y
 say_do apt-get -qq install -y ${pkgs[@]}
 say_do apt-get -qq autoremove -y
+
+# Configure packet filter.
+cat > /etc/iptables/rules.v4 <<EOF
+*filter
+:INPUT ACCEPT [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+-A INPUT -p tcp --dport 22 -j ACCEPT
+-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+-A INPUT -j DROP
+COMMIT
+EOF
+
+say_do ln -sfn rules.v4 /etc/iptables/rules.v6
+say_do systemctl restart netfilter-persistent.service
 
 # Enable sysstat data collection.
 say_do perl -pi -e 's/^ENABLED="false"/ENABLED="true"/' /etc/default/sysstat
