@@ -22,7 +22,6 @@ pkgs=(
     rsync
     sudo
     sysstat
-    ufw
     vim-nox
 )
 
@@ -31,11 +30,6 @@ say_do apt-get -qq update
 say_do apt-get -qq dist-upgrade -y
 say_do apt-get -qq install -y ${pkgs[@]}
 say_do apt-get -qq autoremove -y
-
-# Configure firewall.
-say_do ufw allow 22/tcp
-say_do ufw allow 60000:60999/udp
-say_do ufw --force enable
 
 # Enable sysstat data collection.
 say_do perl -pi -e 's/^ENABLED="false"/ENABLED="true"/' /etc/default/sysstat
