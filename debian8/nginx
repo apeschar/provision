@@ -15,7 +15,7 @@ say_do apt-get -qq install -y nginx-full nginx-doc
 say_do ufw allow 80/tcp
 say_do ufw allow 443/tcp
 
-cat > /etc/nginx/snippets/common <<'EOF'
+cat > /etc/nginx/snippets/common.conf <<'EOF'
 location ~ /\.ht {
     return 403;
 }
@@ -24,7 +24,7 @@ EOF
 mv /etc/nginx/sites-available/default{,.example}
 cat > /etc/nginx/sites-available/default <<'EOF'
 server {
-    include snippets/common;
+    include snippets/common.conf;
 
     listen 80 default_server;
     listen [::]:80 default_server;
