@@ -11,7 +11,7 @@ cd /
 useradd -m letsencrypt
 chsh -s /bin/bash letsencrypt
 
-git clone --depth 1 https://github.com/lukas2511/letsencrypt.sh.git /opt/letsencryptsh
+git clone --depth 1 https://github.com/lukas2511/dehydrated /opt/dehydrated
 
 sudo -u letsencrypt bash <<EOF
     cd ~
@@ -28,7 +28,7 @@ EOT
     mkdir -p acme-challenges
 
     crontab - <<'EOT'
-0 0 1 * * cd \$HOME && /opt/letsencryptsh/letsencrypt.sh -c -f config.sh
+0 0 1 * * cd \$HOME && /opt/dehydrated/dehydrated -c -f config.sh
 EOT
 EOF
 
@@ -36,23 +36,27 @@ ln -sfn /home/letsencrypt/certs /etc/ssl/letsencrypt
 
 # Configure nginx (if installed).
 if [[ -d /etc/nginx/snippets ]]; then
-    cat > /etc/nginx/snippets/letsencrypt.conf <<EOF
+    cat > /etc/nginx/snippets/letsencrypt <<EOF
 location ~ ^/\\.well-known/acme-challenge/(.+)$ {
     alias /home/letsencrypt/acme-challenges/\$1;
 }
 EOF
 fi
 
-if [[ -f /etc/nginx/snippets/common.conf ]]; then
-    cat >> /etc/nginx/snippets/common.conf <<EOF
+if [[ -f /etc/nginx/snippets/common ]]; then
+    cat >> /etc/nginx/snippets/common <<EOF
 
-include snippets/letsencrypt.conf;
+include snippets/letsencrypt;
 EOF
 fi
 
 # Create letsencrypt_all script.
 cat > /usr/local/bin/letsencrypt_all <<EOF
 #!/bin/bash
-exec sudo -u letsencrypt bash -c 'cd ~ && /opt/letsencryptsh/letsencrypt.sh -c -f config.sh'
+exec sudo -u letsencrypt bash -c 'cd ~ && /opt/dehydrated/dehydrated -c -f config.sh'
 EOF
 chmod 700 /usr/local/bin/letsencrypt_all
+
+# Accept Let's Encrypt terms.
+sudo -u letsencrypt /opt/dehydrated/dehydrated \
+    --register --accept-terms -f ~letsencrypt/config.sh
