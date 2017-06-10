@@ -45,7 +45,17 @@ cat > /etc/iptables/rules.v4 <<EOF
 COMMIT
 EOF
 
-say_do cp /etc/iptables/rules.v{4,6}
+cat > /etc/iptables/rules.v6 <<EOF
+*filter
+:INPUT DROP [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+-A INPUT -i lo -j ACCEPT
+-A INPUT -p ipv6-icmp -j ACCEPT
+-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+COMMIT
+EOF
+
 say_do systemctl restart netfilter-persistent.service
 
 # Enable sysstat data collection.
@@ -53,7 +63,7 @@ say_do perl -pi -e 's/^ENABLED="false"/ENABLED="true"/' /etc/default/sysstat
 say_do systemctl restart sysstat
 
 # Set timezone.
-echo Europe/Amsterdam > /etc/timezone
+echo Etc/UTC > /etc/timezone
 dpkg-reconfigure tzdata
 
 # Use vim.
