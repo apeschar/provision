@@ -13,6 +13,7 @@ export DEBIAN_FRONTEND=noninteractive
 pkgs=(
     apt-file
     curl
+    etckeeper
     git
     htop
     mosh
