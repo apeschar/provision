@@ -67,4 +67,7 @@ EOF
 # Update apt-file cache in background.
 setsid apt-file update &>/dev/null
 
+# Configure adduser.
+perl -p -i -e 's/^(DIR_MODE)=.*/$1=0710/' /etc/adduser.conf
+
 echo "Provisioning complete." >&2
