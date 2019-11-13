@@ -1,0 +1,109 @@
+#!/bin/bash
+
+set -eu
+set -o pipefail
+
+say() { echo "$@" >&2; }
+say_do() { say "$@"; "$@"; }
+
+cd /
+
+export DEBIAN_FRONTEND=noninteractive
+
+pkgs=(
+    apt-file
+    atop
+    curl
+    git
+    htop
+    iptables-persistent
+    mosh
+    ncdu
+    parted
+    pv
+    rsync
+    screen
+    strace
+    sudo
+    sysstat
+    vim-tiny
+)
+
+uninstall_pkgs=(
+    vim
+)
+
+# Update and install useful packages.
+say_do apt-get -qq update
+say_do apt-get -qq dist-upgrade -y
+say_do apt-get -qq remove -y ${uninstall_pkgs[@]}
+say_do apt-get -qq install -y ${pkgs[@]}
+say_do apt-get -qq autoremove -y
+
+# Configure packet filter.
+cat > /etc/iptables/rules.v4 <<EOF
+*filter
+:INPUT DROP [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+-A INPUT -p tcp --dport 22 -j ACCEPT
+-A INPUT -i lo -j ACCEPT
+-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+-A INPUT -m state --state NEW -p udp -m multiport --dports 60000:60999 -j ACCEPT
+COMMIT
+EOF
+
+cat > /etc/iptables/rules.v6 <<EOF
+*filter
+:INPUT DROP [0:0]
+:FORWARD ACCEPT [0:0]
+:OUTPUT ACCEPT [0:0]
+-A INPUT -i lo -j ACCEPT
+-A INPUT -p ipv6-icmp -j ACCEPT
+-A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+COMMIT
+EOF
+
+say_do systemctl restart netfilter-persistent.service
+
+# Enable sysstat data collection.
+say_do perl -pi -e 's/^ENABLED="false"/ENABLED="true"/' /etc/default/sysstat
+say_do systemctl restart sysstat
+
+# Set timezone.
+timedatectl set-timezone Etc/UTC
+
+# Empty message of the day.
+echo -n > /etc/motd
+
+# Configure ssh to accept more environment variables
+cat >> /etc/ssh/sshd_config <<EOF
+
+# Accept git environment variables
+AcceptEnv GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL
+EOF
+
+# Configure ssh to let root log in everywhere.
+if [[ ! -f /usr/sbin/cat_root_authorized_keys ]]; then
+    touch /usr/sbin/cat_root_authorized_keys
+    chmod 700 /usr/sbin/cat_root_authorized_keys
+    echo $'#!/bin/bash\ncat /root/.ssh/authorized_keys' > /usr/sbin/cat_root_authorized_keys
+fi
+
+grep -Pq '^AuthorizedKeysCommand\s+' /etc/ssh/sshd_config || cat >> /etc/ssh/sshd_config <<EOF
+
+# Let root login everywhere.
+AuthorizedKeysCommand /usr/sbin/cat_root_authorized_keys
+AuthorizedKeysCommandUser root
+EOF
+
+systemctl reload sshd
+
+# Configure sudo.
+cat > /etc/sudoers.d/01_provision <<EOF
+# Users in group sudo can run any command without a password.
+%sudo ALL=(ALL) NOPASSWD:ALL
+EOF
+
+# Update apt-file cache in background.
+setsid apt-file update &>/dev/null

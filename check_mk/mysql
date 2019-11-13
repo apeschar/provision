@@ -1,0 +1,73 @@
+#!/bin/bash
+
+set -euo pipefail
+
+plugin_dirs=(
+    /usr/lib/check_mk_agent/plugins
+    /usr/share/check-mk-agent/plugins
+)
+
+plugin_url='https://mon.kibo.li/kibo/check_mk/agents/plugins/mk_mysql'
+plugin_sha256='a5a6fe3b87a89330f080818f798c6e2f9bdeed24d4025df46a9173ea2fea8003'
+
+say() { echo "$@" >&2; }
+say_do() { say "$@"; "$@"; }
+
+if ! mysql -h localhost < /dev/null
+then
+    say "Can't connect to MySQL. Please check installation & client configuration."
+    exit 1
+fi
+
+# Install plugin
+plugins=""
+
+for d in "${plugin_dirs[@]}"
+do
+    if [[ -d $d ]]; then
+        plugins="$d"
+        continue
+    fi
+done
+
+if [[ $plugins = "" ]]
+then
+    say "Plugins directory not found. I tried:"
+    for d in "${plugin_dirs[@]}"
+    do
+        say "  - $d"
+    done
+    say ""
+
+    say "Are you sure the agent has been installed?"
+    exit 2
+fi
+
+if [[ ! -f $plugins/mk_mysql ]]; then
+    tmp="$(mktemp)"
+
+    wget -O- --no-check-certificate "$plugin_url" > "$tmp" ||
+    curl -k "$plugin_url" > "$tmp"
+
+    checksum="$(sha256sum < "$tmp" | cut -f1 -d' ')"
+    if [[ $checksum != $plugin_sha256 ]]; then
+        say "Hash of downloaded plugin does not match."
+        say "URL:      $plugin_url"
+        say "File:     $tmp"
+        say "Expected: $plugin_sha256"
+        say "Got:      $checksum"
+        exit 3
+    fi
+
+    mv "$tmp" "$plugins/mk_mysql"
+fi
+
+chmod +x "$plugins/mk_mysql"
+
+# Create configuration file
+if [[ -f ~/.my.cnf ]] && [[ ! -f /etc/check_mk/mysql.cfg ]]
+then
+    mkdir -p /etc/check_mk
+    chmod 700 /etc/check_mk
+    ln -s ~/.my.cnf /etc/check_mk/mysql.cfg
+fi

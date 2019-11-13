@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -eu
+set -o pipefail
+
+say() { echo "$@" >&2; }
+say_do() { say "$@"; "$@"; }
+
+cd /
+
+export DEBIAN_FRONTEND=noninteractive
+
+say_do apt-get -qq install -t $(lsb_release -cs)-backports linux-image-amd64
+
+say "New kernel installed. You'll want to reboot now."

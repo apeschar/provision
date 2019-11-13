@@ -1,0 +1,51 @@
+#!/bin/bash
+
+set -eu
+set -o pipefail
+
+say() { echo "$@" >&2; }
+say_do() { say "$@"; "$@"; }
+
+cd /
+
+export DEBIAN_FRONTEND=noninteractive
+
+# Check Kernel version.
+kernel="$(uname -r)"
+kernel_major="${kernel##.*}"
+
+if [[ $kernel_major -lt 4 ]]; then
+    say "You're running kernel $kernel. We need a newer kernel for overlay fs."
+    say "Try running backports-kernel."
+fi
+
+# Install dependencies.
+say_do apt-get -qq install -y \
+    apt-transport-https \
+    ca-certificates \
+    software-properties-common
+
+# Add Docker key.
+say_do wget -O- https://yum.dockerproject.org/gpg | apt-key add -
+
+# Add Docker repository.
+say_do add-apt-repository "deb https://apt.dockerproject.org/repo/ debian-$(lsb_release -cs) main"
+
+# Install Docker.
+say_do apt-get -qq update
+say_do apt-get -qqy install docker-engine
+
+# Configure Docker using a systemd drop-in.
+say_do mkdir -p /etc/systemd/system/docker.service.d
+say_do install /dev/stdin /etc/systemd/system/docker.service.d/provision.conf <<EOF
+[Service]
+ExecStart=
+ExecStart=/usr/bin/dockerd -H fd:// --storage-driver=overlay2
+EOF
+
+# Reload systemd configuration and restart Docker.
+say_do systemctl daemon-reload
+say_do systemctl restart docker
+
+# Let's see if it works.
+say_do docker run hello-world

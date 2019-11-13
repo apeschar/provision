@@ -1,0 +1,15 @@
+#!/bin/bash
+
+set -eu
+set -o pipefail
+
+say() { echo "$@" >&2; }
+say_do() { say "$@"; "$@"; }
+
+cd /
+
+say_do install /dev/stdin /etc/apt/sources.list.d/backports.list <<EOF
+deb http://ftp.debian.org/debian $(lsb_release -cs)-backports main
+EOF
+
+say_do apt-get -qq update
