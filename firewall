@@ -1,0 +1,45 @@
+#!/bin/bash
+
+set -euo pipefail
+
+[[ -f /etc/firewall ]] || cat > /etc/firewall <<'EOF'
+set -euo pipefail
+
+say_do() {
+	echo "$@" >&2
+	"$@"
+}
+
+ip46tables() {
+	say_do iptables "$@"
+	say_do ip6tables "$@"
+}
+
+# Basic rules, don't touch
+ip46tables -P INPUT DROP
+ip46tables -F INPUT
+ip46tables -A INPUT -m state --state NEW -p tcp --dport 22 -j ACCEPT
+ip46tables -A INPUT -m state --state RELATED,ESTABLISHED -j ACCEPT
+ip46tables -A INPUT -i lo -j ACCEPT
+
+# mosh
+ip46tables -A INPUT -m state --state NEW -p udp --dport 60000:60999 -j ACCEPT
+
+ip46tables -L -v -n
+EOF
+
+[[ -f /etc/systemd/system/firewall.service ]] || cat > /etc/systemd/system/firewall.service <<'EOF'
+[Service]
+Type=oneshot
+ExecStart=/bin/bash /etc/firewall
+
+[Install]
+WantedBy=multi-user.target
+EOF
+
+systemctl enable firewall
+
+echo "Firewall installed.  Start it with:" >&2
+echo >&2
+echo "    bash /etc/firewall" >&2
+echo >&2
