@@ -1,0 +1,24 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+MK_VARDIR="${MK_VARDIR:-/var/lib/check_mk_agent}"
+
+# Get statistics about monitored jobs. Below the job directory there
+# is a sub directory per user that ran a job. That directory must be
+# owned by the user so that a symlink or hardlink attack for reading
+# arbitrary files can be avoided.
+if pushd "$MK_VARDIR/job" >/dev/null; then
+    echo '<<<job>>>'
+    for username in *; do
+        if ! cd "$username"; then
+            continue
+        fi
+        for f in *; do
+            echo "==> $f <=="
+            cat "$f"
+        done
+        cd ..
+    done
+    popd >/dev/null
+fi
