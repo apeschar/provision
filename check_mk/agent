@@ -12,19 +12,29 @@ export DEBIAN_FRONTEND=noninteractive
 tmp="$(mktemp)"
 trap "rm -f '$tmp'" EXIT
 
-say_do wget -O "$tmp" 'https://mon.kibo.li/kibo/check_mk/agents/check-mk-agent_1.5.0p9-1_all.deb'
-say_do dpkg -i "$tmp"
-
-cd /root
-
-if [[ ! -d .ssh ]]; then
-    mkdir .ssh
+if ! version="$(curl -LsSf 'https://mon.kibo.li/' | grep -Po '<div id="version">\K[^<]+')"; then
+    echo "Could not get Check_MK version" >&2
+    exit
 fi
 
-chmod 700 .ssh
+say_do wget -O "$tmp" "https://mon.kibo.li/kibo/check_mk/agents/check-mk-agent_${version}-1_all.deb"
+say_do dpkg -i "$tmp"
 
-cat >> .ssh/authorized_keys <<EOF
-restrict,command="/usr/bin/check_mk_agent" ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDcOPSnFqxA0krADDHhuNyNEcmO4GE2Jf/mYqKucKu4KRCeEAeFxcpQWs+EE0TvVdBB8kbNN17vxOSPWEUBlrF/zoRov7ySEwmzz4+BY62L8Hv4PK1a4UfC6EC1I7AmExCeYD1aCToMckm8DIIibUAGV7OPX/VwkgGjjpHVGxZB0ZIcs6LoewlRi9y/BqtY97ImIEO1Jo4Y0Gc+gAy1CUdOL6L91dkAhU68W/cnVYYCnWzfmxmpjR90mKcgmgaux3I84uOb8/xd/gue9SUUq7x1X43WKPI5TD+oVRdXxaNXs8e9OT4H0iC1dpvxtDRIijrdcim2i0ILa1II1yb96sHX3BxcWsytwIZNSud8cBsaYUb9ZbHCwnw+SHxK0ErZ2lESGrM4XclgJ0Ph9Rkg/B8L+doyEEmWOHrGYknVsl7rAo53O2NhzvByIoy6CSnoQ4e/eMqox3XJLkImthf0yvC80K8w5+aTdhCDFO+DLxcl1xGPUG/2o6eymlzTnaVoHes0UC7RzZAQWTVR0geBA89lGoAp1bQ4bL+EUJITB6x40DHhjM3IZjqn3yXjNbgkJTVcWF09CZwDpGTfMfb2pif/SsNjTRYCzkVYdaIKV4+onb9rjpmzkfgscfcOIQA4kFQmVG8+V9rKDXLFv9Lcf8S7RGNyDfdk3d+ZV8//KXSjnw== check_mk
+say_do systemctl disable check_mk.socket || true
+say_do systemctl stop check_mk.socket || true
+
+cd ~
+
+if ! grep -qP '\bcheck_mk_agent\b' ~/.ssh/authorized_keys &>/dev/null; then
+    if [[ ! -d .ssh ]]; then
+        mkdir .ssh
+    fi
+
+    chmod 700 .ssh
+
+    cat >> .ssh/authorized_keys <<EOF
+restrict,command="check_mk_agent" ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAACAQDcOPSnFqxA0krADDHhuNyNEcmO4GE2Jf/mYqKucKu4KRCeEAeFxcpQWs+EE0TvVdBB8kbNN17vxOSPWEUBlrF/zoRov7ySEwmzz4+BY62L8Hv4PK1a4UfC6EC1I7AmExCeYD1aCToMckm8DIIibUAGV7OPX/VwkgGjjpHVGxZB0ZIcs6LoewlRi9y/BqtY97ImIEO1Jo4Y0Gc+gAy1CUdOL6L91dkAhU68W/cnVYYCnWzfmxmpjR90mKcgmgaux3I84uOb8/xd/gue9SUUq7x1X43WKPI5TD+oVRdXxaNXs8e9OT4H0iC1dpvxtDRIijrdcim2i0ILa1II1yb96sHX3BxcWsytwIZNSud8cBsaYUb9ZbHCwnw+SHxK0ErZ2lESGrM4XclgJ0Ph9Rkg/B8L+doyEEmWOHrGYknVsl7rAo53O2NhzvByIoy6CSnoQ4e/eMqox3XJLkImthf0yvC80K8w5+aTdhCDFO+DLxcl1xGPUG/2o6eymlzTnaVoHes0UC7RzZAQWTVR0geBA89lGoAp1bQ4bL+EUJITB6x40DHhjM3IZjqn3yXjNbgkJTVcWF09CZwDpGTfMfb2pif/SsNjTRYCzkVYdaIKV4+onb9rjpmzkfgscfcOIQA4kFQmVG8+V9rKDXLFv9Lcf8S7RGNyDfdk3d+ZV8//KXSjnw== check_mk
 EOF
 
-chmod 600 .ssh/authorized_keys
+    chmod 600 .ssh/authorized_keys
+fi
