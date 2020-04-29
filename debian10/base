@@ -25,6 +25,7 @@ pkgs=(
     sudo
     sysstat
     vim-nox
+    unattended-upgrades
 )
 
 # Update and install useful packages.
