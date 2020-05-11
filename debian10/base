@@ -26,6 +26,8 @@ pkgs=(
     sysstat
     vim-nox
     unattended-upgrades
+    ripgrep
+    fd-find
 )
 
 # Update and install useful packages.
