@@ -74,4 +74,15 @@ setsid apt-file update &>/dev/null
 # Configure adduser.
 perl -p -i -e 's/^(DIR_MODE)=.*/$1=0710/' /etc/adduser.conf
 
+# Use vim as visual editor.
+install -v -m0644 /dev/stdin /etc/profile.d/visual.sh <<EOF
+export VISUAL=/usr/bin/vim
+EOF
+
+# Configure git.
+install -v -m0644 /dev/stdin /etc/gitconfig <<EOF
+[commit]
+verbose=true
+EOF
+
 echo "Provisioning complete." >&2
