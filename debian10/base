@@ -11,23 +11,23 @@ cd /
 export DEBIAN_FRONTEND=noninteractive
 
 pkgs=(
-    apt-file
-    curl
-    etckeeper
-    git
-    htop
-    mosh
-    ncdu
-    pv
-    rsync
-    screen
-    strace
-    sudo
-    sysstat
-    vim-nox
-    unattended-upgrades
-    ripgrep
-    fd-find
+	apt-file
+	curl
+	etckeeper
+	git
+	htop
+	mosh
+	ncdu
+	pv
+	rsync
+	screen
+	strace
+	sudo
+	sysstat
+	neovim
+	unattended-upgrades
+	ripgrep
+	fd-find
 )
 
 # Update and install useful packages.
@@ -63,9 +63,13 @@ EOF
 systemctl reload sshd
 
 # Configure sudo.
-cat > /etc/sudoers.d/01_provision <<EOF
-# Users in group sudo can run any command without a password.
-%sudo ALL=(ALL) NOPASSWD:ALL
+install -v -m0600 /dev/stdin /etc/sudoers.d/01_provision <<-EOF
+	# Users in group sudo can run any command without a password.
+	%sudo ALL=(ALL) NOPASSWD:ALL
+EOF
+
+install -v -m0600 /dev/stdin /etc/sudoers.d/90_git_env <<-EOF
+	Defaults env_keep += "GIT_AUTHOR_EMAIL GIT_AUTHOR_NAME GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL"
 EOF
 
 # Update apt-file cache in background.
@@ -75,8 +79,9 @@ setsid apt-file update &>/dev/null
 perl -p -i -e 's/^(DIR_MODE)=.*/$1=0710/' /etc/adduser.conf
 
 # Use vim as visual editor.
-install -v -m0644 /dev/stdin /etc/profile.d/visual.sh <<EOF
-export VISUAL=/usr/bin/vim
+update-alternatives --set editor /usr/bin/nvim
+install -v -m0644 /dev/stdin /etc/profile.d/visual.sh <<-EOF
+	export VISUAL=/usr/bin/nvim
 EOF
 
 # Configure git.
