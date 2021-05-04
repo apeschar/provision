@@ -28,6 +28,7 @@ pkgs=(
 	unattended-upgrades
 	ripgrep
 	fd-find
+	man-db
 )
 
 # Update and install useful packages.
