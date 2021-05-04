@@ -80,9 +80,16 @@ setsid apt-file update &>/dev/null
 perl -p -i -e 's/^(DIR_MODE)=.*/$1=0710/' /etc/adduser.conf
 
 # Use vim as visual editor.
-update-alternatives --set editor /usr/bin/nvim
+for name in editor vi vim; do
+	update-alternatives --set "$name" /usr/bin/nvim
+done
+
 install -v -m0644 /dev/stdin /etc/profile.d/visual.sh <<-EOF
 	export VISUAL=/usr/bin/nvim
+EOF
+
+install -v -m0644 /dev/stdin /usr/share/nvim/sysinit.vim <<-EOF
+	colorscheme desert
 EOF
 
 # Configure git.
