@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+
+cleanup() {
+	echo "<<<<>>>>"
+}
+trap cleanup EXIT
+
+while read machine; do
+	systemd-run --machine="$machine" --wait --pipe /bin/bash <<-EOF
+		{
+		echo "<<<<\$(hostname -f)>>>>"
+		`cat /usr/bin/check_mk_agent`
+		}
+	EOF
+done < <(machinectl list --no-legend | awk '{print $1}')
