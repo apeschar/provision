@@ -1,0 +1,22 @@
+#!/bin/bash
+
+while read user; do
+	if ! [[ $(loginctl show-user --value -p Linger "$user") = yes ]]; then
+		continue
+	fi
+	sudo -u "$user" env XDG_RUNTIME_DIR="$(loginctl show-user --value -p RuntimePath "$user")" /bin/bash <<-'EOF'
+		systemctl --user --no-legend --all --full | awk '{print $1, $4}' | while read unit status; do
+			unit_path="$(systemctl --user show --value -p FragmentPath -- "$unit")"
+			case $unit_path in
+				*/.config/systemd/user/*) ;;
+				*) continue ;;
+			esac
+			case $status in
+				failed) state=2 ;;
+				*) state=0 ;;
+			esac
+			state_change="$(systemctl --user show --value -p StateChangeTimestamp -- "$unit")"
+			echo "${state} \"${USER}:${unit}\" - ${unit} is ${status} since ${state_change}"
+		done
+	EOF
+done < <(loginctl list-users --no-legend | awk '{print $2}')
