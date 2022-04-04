@@ -12,23 +12,24 @@ export DEBIAN_FRONTEND=noninteractive
 
 pkgs=(
 	apt-file
+	bash-completion
 	curl
 	etckeeper
+	fd-find
 	git
 	htop
+	man-db
 	mosh
 	ncdu
+	neovim
 	pv
+	ripgrep
 	rsync
 	screen
 	strace
 	sudo
 	sysstat
-	neovim
 	unattended-upgrades
-	ripgrep
-	fd-find
-	man-db
 )
 
 # Update and install useful packages.
