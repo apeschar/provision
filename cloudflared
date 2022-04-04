@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+set -euo pipefail
+
+release=$(lsb_release -cs)
+
+install -vT -m0644 /dev/stdin /etc/apt/sources.list.d/cloudflare.list <<-EOF
+    deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/ ${release} main
+EOF
+
+curl -sSf https://pkg.cloudflare.com/cloudflare-main.gpg -o /usr/share/keyrings/cloudflare-main.gpg
+
+apt-get update
+apt-get install -y cloudflared
