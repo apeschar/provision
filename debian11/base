@@ -1,0 +1,102 @@
+#!/bin/bash
+
+set -eu
+set -o pipefail
+
+say() { echo "$@" >&2; }
+say_do() { say "$@"; "$@"; }
+
+cd /
+
+export DEBIAN_FRONTEND=noninteractive
+
+pkgs=(
+	apt-file
+	bash-completion
+	curl
+	etckeeper
+	fd-find
+	git
+	htop
+	man-db
+	mosh
+	ncdu
+	neovim
+	pv
+	ripgrep
+	rsync
+	screen
+	strace
+	sudo
+	sysstat
+	unattended-upgrades
+)
+
+# Update and install useful packages.
+say_do apt-get update
+say_do apt-get dist-upgrade -y
+say_do apt-get install -y ${pkgs[@]}
+
+# Enable sysstat data collection.
+say_do perl -pi -e 's/^ENABLED="false"/ENABLED="true"/' /etc/default/sysstat
+say_do systemctl restart sysstat
+
+# Set timezone.
+timedatectl set-timezone Etc/UTC
+
+# Empty message of the day.
+echo -n > /etc/motd
+
+# Configure ssh to accept more environment variables
+grep -Pq '^AcceptEnv GIT_AUTHOR_NAME' /etc/ssh/sshd_config || cat >> /etc/ssh/sshd_config <<EOF
+
+# Accept git environment variables
+AcceptEnv GIT_AUTHOR_NAME GIT_AUTHOR_EMAIL GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL
+EOF
+
+# Configure ssh to let root log in everywhere.
+grep -Pq '^AuthorizedKeysCommand\s+' /etc/ssh/sshd_config || cat >> /etc/ssh/sshd_config <<EOF
+
+# Let root login everywhere.
+AuthorizedKeysCommand /bin/cat /root/.ssh/authorized_keys
+AuthorizedKeysCommandUser root
+EOF
+
+systemctl reload sshd
+
+# Configure sudo.
+install -v -m0600 /dev/stdin /etc/sudoers.d/01_provision <<-EOF
+	# Users in group sudo can run any command without a password.
+	%sudo ALL=(ALL) NOPASSWD:ALL
+EOF
+
+install -v -m0600 /dev/stdin /etc/sudoers.d/90_git_env <<-EOF
+	Defaults env_keep += "GIT_AUTHOR_EMAIL GIT_AUTHOR_NAME GIT_COMMITTER_NAME GIT_COMMITTER_EMAIL"
+EOF
+
+# Update apt-file cache in background.
+setsid apt-file update &>/dev/null
+
+# Configure adduser.
+perl -p -i -e 's/^(DIR_MODE)=.*/$1=0710/' /etc/adduser.conf
+
+# Use vim as visual editor.
+for name in editor vi vim; do
+	update-alternatives --set "$name" /usr/bin/nvim
+done
+
+install -v -m0644 /dev/stdin /etc/profile.d/visual.sh <<-EOF
+	export VISUAL=/usr/bin/nvim
+EOF
+
+install -v -m0644 /dev/stdin /usr/share/nvim/sysinit.vim <<-EOF
+	colorscheme desert
+EOF
+
+# Configure git.
+install -v -m0644 /dev/stdin /etc/gitconfig <<EOF
+[commit]
+verbose=true
+EOF
+
+echo "Provisioning complete." >&2
