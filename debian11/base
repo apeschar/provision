@@ -18,6 +18,7 @@ pkgs=(
 	fd-find
 	git
 	htop
+	locales
 	man-db
 	mosh
 	ncdu
@@ -36,6 +37,10 @@ pkgs=(
 say_do apt-get update
 say_do apt-get dist-upgrade -y
 say_do apt-get install -y ${pkgs[@]}
+
+# Configure locales.
+perl -p -i -e 's~^# (en_US\.UTF-8 UTF-8$)~$1~g' /etc/locale.gen
+locale-gen
 
 # Enable sysstat data collection.
 say_do perl -pi -e 's/^ENABLED="false"/ENABLED="true"/' /etc/default/sysstat
