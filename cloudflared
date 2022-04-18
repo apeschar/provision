@@ -4,6 +4,10 @@ set -euo pipefail
 
 release=$(lsb_release -cs)
 
+if [[ $release = bullseye ]]; then
+	release=buster
+fi
+
 install -vT -m0644 /dev/stdin /etc/apt/sources.list.d/cloudflare.list <<-EOF
     deb [signed-by=/usr/share/keyrings/cloudflare-main.gpg] https://pkg.cloudflare.com/ ${release} main
 EOF
