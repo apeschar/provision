@@ -10,6 +10,8 @@ def main(args):
         if not user_may_linger(user):
             continue
         for unit in get_user_units(user):
+            if not unit["unit"].endswith(".service"):
+                continue
             if "/.config/systemd/user/" not in get_user_unit_prop(
                 user, unit["unit"], "FragmentPath"
             ):
@@ -55,7 +57,9 @@ def user_may_linger(user):
 
 def get_user_units(user):
     return json.loads(
-        run_as_user(user, ["systemctl", "--user", "--output", "json", "list-units"])
+        run_as_user(
+            user, ["systemctl", "--user", "list-units", "--output", "json", "--all"]
+        )
     )
 
 
