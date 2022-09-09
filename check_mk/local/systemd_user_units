@@ -1,22 +1,91 @@
-#!/bin/bash
+#!/usr/bin/env python3
 
-while read user; do
-	if ! [[ $(loginctl show-user --value -p Linger "$user") = yes ]]; then
-		continue
-	fi
-	sudo -u "$user" env XDG_RUNTIME_DIR="$(loginctl show-user --value -p RuntimePath "$user")" /bin/bash <<-'EOF'
-		systemctl --user --no-legend --all --full | awk '{print $1, $4}' | while read unit status; do
-			unit_path="$(systemctl --user show --value -p FragmentPath -- "$unit")"
-			case $unit_path in
-				*/.config/systemd/user/*) ;;
-				*) continue ;;
-			esac
-			case $status in
-				failed) state=2 ;;
-				*) state=0 ;;
-			esac
-			state_change="$(systemctl --user show --value -p StateChangeTimestamp -- "$unit")"
-			echo "${state} \"${USER}:${unit}\" - ${unit} is ${status} since ${state_change}"
-		done
-	EOF
-done < <(loginctl list-users --no-legend | awk '{print $2}')
+import json
+import subprocess
+from argparse import ArgumentParser
+
+
+def main(args):
+    for user in get_users():
+        if not user_may_linger(user):
+            continue
+        for unit in get_user_units(user):
+            if "/.config/systemd/user/" not in get_user_unit_prop(
+                user, unit["unit"], "FragmentPath"
+            ):
+                continue
+            print(
+                get_state(unit["active"]),
+                '"%s:%s"' % (user, unit["unit"]),
+                "-",
+                "%s is %s since %s"
+                % (
+                    unit["unit"],
+                    unit["active"],
+                    get_user_unit_prop(user, unit["unit"], "StateChangeTimestamp"),
+                ),
+            )
+
+
+def get_state(active_state):
+    if active_state == "failed":
+        return 2
+    return 0
+
+
+def get_users():
+    return [
+        u["user"]
+        for u in json.loads(
+            subprocess.check_output(
+                [
+                    "loginctl",
+                    "list-users",
+                    "--output",
+                    "json",
+                ]
+            )
+        )
+    ]
+
+
+def user_may_linger(user):
+    return get_user_prop(user, "Linger") == "yes"
+
+
+def get_user_units(user):
+    return json.loads(
+        run_as_user(user, ["systemctl", "--user", "--output", "json", "list-units"])
+    )
+
+
+def run_as_user(user, cmd):
+    return subprocess.check_output(
+        [
+            "sudo",
+            "-u",
+            user,
+            "env",
+            "XDG_RUNTIME_DIR=%s" % get_user_prop(user, "RuntimePath"),
+            *cmd,
+        ],
+        encoding="utf-8",
+    )
+
+
+def get_user_prop(user, prop):
+    return subprocess.check_output(
+        ["loginctl", "show-user", "--value", "-p", prop, user], encoding="utf-8"
+    ).strip()
+
+
+def get_user_unit_prop(user, unit, prop):
+    return run_as_user(
+        user, ["systemctl", "--user", "show", "--value", "-p", prop, "--", unit]
+    ).strip()
+
+
+parser = ArgumentParser()
+
+if __name__ == "__main__":
+    main(parser.parse_args())
