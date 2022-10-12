@@ -12,7 +12,10 @@ export DEBIAN_FRONTEND=noninteractive
 tmp="$(mktemp)"
 trap "rm -f '$tmp'" EXIT
 
-if ! version="$(wget -qO- 'https://mon.kibo.li/' | grep -Po '<div id="version">\K[^<]+')"; then
+if ! version="$(
+	wget -qO- 'https://mon.kibo.li/' |
+	grep -Po '<div id="foot">Version: \K\d+\.\d+\.\d+(p\d+)?'
+)"; then
     echo "Could not get Check_MK version" >&2
     exit
 fi
